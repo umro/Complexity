@@ -1,0 +1,459 @@
+﻿<UserControl x:Class="Complexity.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:t="clr-namespace:UMRO.Utils.FlexibleTitleBar;assembly=UMRO.Utils.FlexibleTitleBar-1.3.0.0"
+        xmlns:oxy="http://oxyplot.org/wpf"
+        Loaded="MainView_OnLoaded"
+        FontSize="18"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+
+    <UserControl.Resources>
+        <oxy:OxyColorConverter x:Key="OxyColorConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>    <!--Title bar-->
+            <RowDefinition Height="*"/>     <!--Main contents-->
+        </Grid.RowDefinitions>
+
+        <!-- Title bar -->
+        <t:TitleBar Name="TitleBar"
+            Grid.Row="0"
+            ShowClinicalWarning="False"
+            UseSignatureLogo="True"
+            SignatureLogo="signature-logo.png"
+            PatientId="{Binding Patient.Id}"
+            PatientLastName="{Binding Patient.LastName}"
+            PatientFirstName="{Binding Patient.FirstName}"
+            ShowCourseAndPlan="False"
+            UserName="{Binding User.Id}"
+            ProductVersion="{Binding Version}"
+            HelpUri="{Binding HelpUri}">
+        </t:TitleBar>
+
+        <!--Main contents-->
+        <Grid Grid.Row="1" Margin="10" DataContext="{Binding EdgePenaltyViewModel}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />    <!-- Top (metrics and CP plot) -->
+                <RowDefinition Height="*" />    <!-- Bottom (histogram) -->
+            </Grid.RowDefinitions>
+
+            <!-- Metrics and CP plot -->
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="400" />    <!-- Metrics and plot options -->
+                    <ColumnDefinition Width="*"   />    <!-- CP plot -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Metrics and plot options -->
+                <DockPanel
+                    Grid.Column="0"
+                    LastChildFill="True"
+                    Margin="0,0,10,0"
+                    >
+                    <!-- Plot options (show below metrics) -->
+                    <StackPanel
+                        DockPanel.Dock="Bottom"
+                        Orientation="Vertical"
+                        Margin="0,5,0,0"
+                        >
+
+                        <!-- Plot type -->
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Text="Plot type:"
+                                VerticalAlignment="Center"
+                                />
+                            <RadioButton
+                                Content="Box plot"
+                                IsChecked="{Binding IsBoxPlot}"
+                                Margin="5,0,0,0"
+                                />
+                            <RadioButton
+                                Content="Line plot"
+                                IsChecked="True"
+                                Margin="10,0,0,0"
+                                />
+                        </StackPanel>
+
+                        <!-- Metric weight -->
+                        <DockPanel
+                            LastChildFill="True"
+                            Margin="0,5,0,0"
+                            >
+                            <TextBlock
+                                DockPanel.Dock="Left"
+                                Text="Metric weight:"
+                                VerticalAlignment="Center"
+                                />
+                            <ComboBox
+                                x:Name="WeightTypeComboBox"
+                                ItemsSource="{Binding WeightTypes}"
+                                SelectedItem="{Binding WeightType}"
+                                Margin="5,0,0,0"
+                                >
+                            </ComboBox>
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- List of courses (and plan/field metrics) -->
+                    <ScrollViewer
+                        VerticalScrollBarVisibility="Auto"
+                        BorderThickness="1"
+                        BorderBrush="Black"
+                        >
+                        <ItemsControl
+                            ItemsSource="{Binding Courses}"
+                            >
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Expander
+                                        Header="{Binding DisplayName}"
+                                        IsExpanded="True"
+                                        >
+                                        <Expander.Resources>
+                                            <!-- Create a custom collection view for Fields,
+                                                 so that they are grouped by Plan -->
+                                            <CollectionViewSource
+                                                x:Key="FieldsView"
+                                                Source="{Binding Fields}"
+                                                >
+                                                <CollectionViewSource.GroupDescriptions>
+                                                    <PropertyGroupDescription PropertyName="Plan" />
+                                                </CollectionViewSource.GroupDescriptions>
+                                            </CollectionViewSource>
+                                        </Expander.Resources>
+
+                                        <DataGrid
+                                            ItemsSource="{Binding Source={StaticResource FieldsView}}"
+                                            AutoGenerateColumns="False"
+                                            HeadersVisibility="Column"
+                                            CanUserReorderColumns="False"
+                                            CanUserResizeColumns="False"
+                                            ClipboardCopyMode="IncludeHeader"
+                                            >
+
+                                            <DataGrid.GroupStyle>
+                                                <GroupStyle>
+                                                    <GroupStyle.HeaderTemplate>
+                                                        <DataTemplate>
+                                                            <Border
+                                                                Background="White"
+                                                                BorderThickness="0,0,0,2"
+                                                                BorderBrush="Black"
+                                                                Padding="0,10,0,3"
+                                                                >
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="125" />
+                                                                        <ColumnDefinition Width="90" />
+                                                                        <ColumnDefinition Width="75" />
+                                                                        <ColumnDefinition Width="50" />
+                                                                    </Grid.ColumnDefinitions>
+
+                                                                    <TextBlock
+                                                                        Text="{Binding Name.Id}"
+                                                                        Margin="3,0,0,0"
+                                                                        />
+
+                                                                    <TextBlock
+                                                                        Grid.Column="1"
+                                                                        Text="{Binding Name.Penalty, StringFormat=\{0:f6\}}"
+                                                                        Margin="3,0,0,0"
+                                                                        />
+
+                                                                    <TextBlock
+                                                                        Grid.Column="2"
+                                                                        Text="{Binding Name.MU, StringFormat=\{0:f2\}}"
+                                                                        Margin="3,0,0,0"
+                                                                        />
+
+                                                                    <CheckBox
+                                                                        Grid.Column="3"
+                                                                        IsChecked="{Binding Name.ShowOnPlots}"
+                                                                        VerticalAlignment="Center"
+                                                                        HorizontalAlignment="Center"
+                                                                        Margin="-1,0,0,0"
+                                                                        />
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </GroupStyle.HeaderTemplate>
+                                                    <GroupStyle.ContainerStyle>
+                                                        <Style TargetType="GroupItem">
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="GroupItem">
+                                                                        <StackPanel>
+                                                                            <ContentPresenter />
+                                                                            <ItemsPresenter Margin="0" />
+                                                                        </StackPanel>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </GroupStyle.ContainerStyle>
+                                                </GroupStyle>
+                                            </DataGrid.GroupStyle>
+
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn
+                                                    Header="Plan/Field"
+                                                    Binding="{Binding DisplayName}"
+                                                    IsReadOnly="True"
+                                                    Width="125"
+                                                    />
+                                                <DataGridTextColumn
+                                                    Header="Metric"
+                                                    Binding="{Binding Penalty, StringFormat=\{0:f6\}}"
+                                                    IsReadOnly="True"
+                                                    Width="90"
+                                                    />
+                                                <DataGridTextColumn
+                                                    Header="MU"
+                                                    Binding="{Binding MU, StringFormat=\{0:f2\}}"
+                                                    IsReadOnly="True"
+                                                    Width="75"
+                                                    />
+                                                <DataGridTemplateColumn
+                                                    Header="Plot"
+                                                    Width="50"
+                                                    >
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Border>
+                                                                <Border.Background>
+                                                                    <SolidColorBrush
+                                                                        Color="{Binding PlotColor, Converter={StaticResource OxyColorConverter}}"
+                                                                        />
+                                                                </Border.Background>
+                                                                <CheckBox
+                                                                    IsChecked="{Binding ShowOnPlots, UpdateSourceTrigger=PropertyChanged}"
+                                                                    IsEnabled="{Binding Plan.ShowOnPlots}"
+                                                                    VerticalAlignment="Center"
+                                                                    HorizontalAlignment="Center"
+                                                                    />
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                            </DataGrid.Columns>
+
+                                            <DataGrid.CellStyle>
+                                                <!-- Disable cell selection in a DataGrid -->
+                                                <Style TargetType="DataGridCell">
+                                                    <Setter Property="Foreground" Value="Black" />
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                                </Style>
+                                            </DataGrid.CellStyle>
+
+                                            <!--Allow user to copy data-->
+                                            <DataGrid.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Command="ApplicationCommands.Copy" />
+                                                </ContextMenu>
+                                            </DataGrid.ContextMenu>
+                                        </DataGrid>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+
+                <GridSplitter
+                    Grid.Column="0"
+                    Width="4"
+                    Margin="3,0,3,0"
+                    BorderThickness="1,0,1,0"
+                    BorderBrush="#40000000"
+                    VerticalAlignment="Stretch"
+                    HorizontalAlignment="Right"
+                    />
+
+                <!-- CP plot -->
+                <oxy:PlotView
+                    Grid.Column="1"
+                    x:Name="Plot"
+                    Model="{Binding PlotModel}"
+                    Margin="0,0,0,0"
+                    BorderBrush="Black"
+                    BorderThickness="1"
+                    >
+                    <oxy:PlotView.ContextMenu>
+                        <ContextMenu FontSize="18">
+                            <MenuItem
+                                Header="Export data to CSV..."
+                                Click="ExportControlPointDataAsCsv"
+                                />
+                            <MenuItem
+                                Header="Export to PDF..."
+                                Click="ExportControlPointPlotAsPdf"
+                                />
+                        </ContextMenu>
+                    </oxy:PlotView.ContextMenu>
+                </oxy:PlotView>
+            </Grid>
+
+            <GridSplitter
+                Grid.Row="0"
+                Height="4"
+                Margin="0,3,0,3"
+                BorderThickness="0,1,0,1"
+                BorderBrush="#40000000"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Stretch"
+                />
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="400" />    <!-- Stats and histogram options -->
+                    <ColumnDefinition Width="*"   />    <!-- Histogram -->
+                </Grid.ColumnDefinitions>
+
+                <DockPanel
+                    Grid.Column="0"
+                    LastChildFill="True"
+                    Margin="0,0,10,0"
+                    >
+                    <!-- Histogram options (displayed below stats) -->
+                    <StackPanel
+                        DockPanel.Dock="Bottom"
+                        Margin="0,5,0,0"
+                        >
+
+                        <!-- Therapy type (IMRT or VMAT) -->
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Text="Therapy:"
+                                Width="75"
+                                />
+                            <RadioButton
+                                Content="IMRT"
+                                IsChecked="True"
+                                Margin="5,0,0,0"
+                                />
+                            <RadioButton
+                                Content="VMAT"
+                                IsChecked="{Binding IsVmat}"
+                                Margin="10,0,0,0"
+                                />
+                        </StackPanel>
+
+                        <!-- Source (plan, field) or site -->
+                        <StackPanel DataContext="{Binding HistogramViewModel}">
+                            <!--Histogram type-->
+                            <DockPanel
+                                LastChildFill="True"
+                                Margin="0,5,0,0"
+                                >
+                                <TextBlock
+                                    DockPanel.Dock="Left"
+                                    Text="Source:"
+                                    Width="75"
+                                    />
+                                <ComboBox
+                                    x:Name="SourceComboBox"
+                                    ItemsSource="{Binding DataTypes}"
+                                    SelectedItem="{Binding DataType}"
+                                    Margin="5,0,0,0"
+                                    />
+                            </DockPanel>
+
+                            <!--Histogram filter by site-->
+                            <DockPanel
+                                LastChildFill="True"
+                                Margin="0,5,0,0"
+                                >
+                                <TextBlock
+                                    DockPanel.Dock="Left"
+                                    Text="Site:"
+                                    Width="75"
+                                    />
+                                <ComboBox
+                                    x:Name="SiteComboBox"
+                                    ItemsSource="{Binding Sites}"
+                                    SelectedItem="{Binding Site}"
+                                    Margin="5,0,0,0"
+                                    />
+                            </DockPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Stats -->
+                    <DataGrid
+                        ItemsSource="{Binding HistogramViewModel.Stats}"
+                        AutoGenerateColumns="False"
+                        HeadersVisibility="Column"
+                        IsReadOnly="True"
+                        CanUserReorderColumns="False"
+                        ClipboardCopyMode="IncludeHeader"
+                        >
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Header="Plan/Field"
+                                Binding="{Binding Name}"
+                                Width="150"
+                                />
+                            <DataGridTextColumn
+                                Header="Std. Dev."
+                                Binding="{Binding StdDev, StringFormat=\{0:f6\}}"
+                                Width="100"
+                                />
+                        </DataGrid.Columns>
+
+                        <DataGrid.CellStyle>
+                            <!-- Disable cell selection in a DataGrid -->
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Foreground" Value="Black" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                            </Style>
+                        </DataGrid.CellStyle>
+
+                        <!--Allow user to copy data-->
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Command="ApplicationCommands.Copy" />
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
+                    </DataGrid>
+                </DockPanel>
+
+                <GridSplitter
+                    Grid.Column="0"
+                    Width="4"
+                    Margin="3,0,3,0"
+                    BorderThickness="1,0,1,0"
+                    BorderBrush="#40000000"
+                    VerticalAlignment="Stretch"
+                    HorizontalAlignment="Right"
+                    />
+
+                <!-- Histogram -->
+                <oxy:PlotView
+                    Grid.Column="1"
+                    x:Name="Histogram"
+                    Model="{Binding HistogramViewModel.HistogramModel}"
+                    BorderBrush="Black"
+                    BorderThickness="1"
+                    >
+                    <oxy:PlotView.ContextMenu>
+                        <ContextMenu FontSize="18">
+                            <MenuItem
+                                Header="Export data to CSV..."
+                                Click="ExportHistogramAsCsv"
+                                />
+                            <MenuItem
+                                Header="Export to PDF..."
+                                Click="ExportHistogramAsPdf"
+                                />
+                        </ContextMenu>
+                    </oxy:PlotView.ContextMenu>
+                </oxy:PlotView>
+             </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
