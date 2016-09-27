@@ -130,7 +130,8 @@ namespace Complexity.ViewModels
 
         public HistogramViewModel HistogramViewModel { get; set; }
 
-        public EdgePenaltyViewModel(MainViewModel mainViewModel, PlanSetup activePlan, IEnumerable<PlanSetup> plans)
+        public EdgePenaltyViewModel(MainViewModel mainViewModel,
+            Patient patient, PlanSetup activePlan, IEnumerable<PlanSetup> plans)
         {
             MainViewModel = mainViewModel;
 
@@ -138,7 +139,7 @@ namespace Complexity.ViewModels
 
             Plans = new ObservableCollection<PlanViewModel>
                 (from plan in plans
-                    select new PlanViewModel(plan));
+                    select new PlanViewModel(patient, plan));
 
             foreach (PlanViewModel plan in Plans)
             {
@@ -288,7 +289,8 @@ namespace Complexity.ViewModels
                 {
                     try
                     {
-                        plan.Penalty = EdgePenaltyCalculator.CalculateForPlan(plan.Plan);
+                        plan.Penalty = EdgePenaltyCalculator
+                            .CalculateForPlan(plan.Patient, plan.Plan);
 
                         foreach (FieldViewModel field in plan.Fields)
                         {
@@ -316,7 +318,7 @@ namespace Complexity.ViewModels
         public void CalculateEdgePenaltyForField(FieldViewModel field)
         {
             double[] edgePenalties = EdgePenaltyCalculator.
-                CalculatePerControlPointWeighted(field.Plan.Plan, field.Beam);
+                CalculatePerControlPointWeighted(field.Plan.Patient, field.Plan.Plan, field.Beam);
 
             field.Penalty = edgePenalties.Sum();
 
@@ -334,7 +336,8 @@ namespace Complexity.ViewModels
                         foreach (FieldViewModel field in plan.Fields)
                         {
                             double[] penalties = EdgePenaltyCalculator.
-                                CalculatePerControlPointUnweighted(field.Plan.Plan, field.Beam);
+                                CalculatePerControlPointUnweighted(
+                                    field.Plan.Patient, field.Plan.Plan, field.Beam);
                             SetEdgePenaltiesForControlPoints(field, penalties);
                         }
                     }

@@ -14,9 +14,9 @@ namespace Complexity.EsapiApertureMetric
 
         // Returns the complexity metric of a plan, calculated as
         // the weighted sum of the individual metrics for each beam
-        public double CalculateForPlan(PlanSetup plan)
+        public double CalculateForPlan(Patient patient, PlanSetup plan)
         {
-            return WeightedSum(GetWeights(plan), GetMetrics(plan));
+            return WeightedSum(GetWeights(plan), GetMetrics(patient, plan));
         }
 
         // Returns the weights of a plan's beams;
@@ -35,17 +35,17 @@ namespace Complexity.EsapiApertureMetric
         }
 
         // Returns the unweighted metrics of a plan's beams
-        private double[] GetMetrics(PlanSetup plan)
+        private double[] GetMetrics(Patient patient, PlanSetup plan)
         {
-            return CalculateForPlanPerBeam(plan);
+            return CalculateForPlanPerBeam(patient, plan);
         }
 
         // Returns the unweighted metrics of a plan's non-setup beams
-        private double[] CalculateForPlanPerBeam(PlanSetup plan)
+        private double[] CalculateForPlanPerBeam(Patient patient, PlanSetup plan)
         {
             return (from beam in plan.Beams
                     where !beam.IsSetupField
-                    select CalculateForBeam(plan, beam)).ToArray();
+                    select CalculateForBeam(patient, plan, beam)).ToArray();
         }
 
         #endregion // Complexity metric for a plan
@@ -54,9 +54,9 @@ namespace Complexity.EsapiApertureMetric
 
         // Returns the complexity metric of a beam, calculated as
         // the weighted sum of the individual metrics for each control point
-        public double CalculateForBeam(PlanSetup plan, Beam beam)
+        public double CalculateForBeam(Patient patient, PlanSetup plan, Beam beam)
         {
-            return WeightedSum(GetWeights(beam), GetMetrics(plan, beam));
+            return WeightedSum(GetWeights(beam), GetMetrics(patient, plan, beam));
         }
 
         // Returns the weights of a beam's control points;
@@ -73,15 +73,15 @@ namespace Complexity.EsapiApertureMetric
         }
 
         // Returns the unweighted metrics of a beam's control points
-        protected virtual double[] GetMetrics(PlanSetup plan, Beam beam)
+        protected virtual double[] GetMetrics(Patient patient, PlanSetup plan, Beam beam)
         {
-            return CalculateForBeamPerAperture(plan, beam);
+            return CalculateForBeamPerAperture(patient, plan, beam);
         }
 
         // Returns the unweighted metrics of a beam's apertures
-        private double[] CalculateForBeamPerAperture(PlanSetup plan, Beam beam)
+        private double[] CalculateForBeamPerAperture(Patient patient, PlanSetup plan, Beam beam)
         {
-            return CalculatePerAperture(CreateApertures(plan, beam));
+            return CalculatePerAperture(CreateApertures(patient, plan, beam));
         }
 
         // Returns the unweighted metrics of a list of apertures;
@@ -89,9 +89,9 @@ namespace Complexity.EsapiApertureMetric
         protected abstract double[] CalculatePerAperture(IEnumerable<Aperture> apertures);
 
         // Returns the apertures created from a beam
-        private IEnumerable<Aperture> CreateApertures(PlanSetup plan, Beam beam)
+        private IEnumerable<Aperture> CreateApertures(Patient patient, PlanSetup plan, Beam beam)
         {
-            return new AperturesFromBeamCreator().Create(plan, beam);
+            return new AperturesFromBeamCreator().Create(patient, plan, beam);
         }
 
         #endregion // Complexity metric for a beam
@@ -99,15 +99,17 @@ namespace Complexity.EsapiApertureMetric
         #region Complexity metric for control points
 
         // Returns the weighted metrics of a beam's control points
-        public double[] CalculatePerControlPointWeighted(PlanSetup plan, Beam beam)
+        public double[] CalculatePerControlPointWeighted(
+            Patient patient, PlanSetup plan, Beam beam)
         {
-            return WeightedValues(GetWeights(beam), GetMetrics(plan, beam));
+            return WeightedValues(GetWeights(beam), GetMetrics(patient, plan, beam));
         }
 
         // Returns the unweighted metrics of a beam's control points
-        public double[] CalculatePerControlPointUnweighted(PlanSetup plan, Beam beam)
+        public double[] CalculatePerControlPointUnweighted(
+            Patient patient, PlanSetup plan, Beam beam)
         {
-            return GetMetrics(plan, beam);
+            return GetMetrics(patient, plan, beam);
         }
 
         // Returns the weights of a beam's control points

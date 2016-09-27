@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using Complexity.ApertureMetric;
 using Complexity.AriaEntity;
-using VMS.TPS;
 using VMS.TPS.Common.Model.API;
+using Patient = VMS.TPS.Common.Model.API.Patient;
 using PlanSetup = VMS.TPS.Common.Model.API.PlanSetup;
 
 namespace Complexity.EsapiApertureMetric
 {
     public class AperturesFromBeamCreator
     {
-        public IEnumerable<Aperture> Create(PlanSetup plan, Beam beam)
+        public IEnumerable<Aperture> Create(Patient patient, PlanSetup plan, Beam beam)
         {
             List<Aperture> apertures = new List<Aperture>();
-            double[] leafWidths = GetLeafWidths(plan, beam);
+            double[] leafWidths = GetLeafWidths(patient, plan, beam);
 
             foreach (ControlPoint controlPoint in beam.ControlPoints)
             {
@@ -52,11 +52,11 @@ namespace Complexity.EsapiApertureMetric
             return leafPositions;
         }
 
-        public double[] GetLeafWidths(PlanSetup plan, Beam beam)
+        public double[] GetLeafWidths(Patient patient, PlanSetup plan, Beam beam)
         {
             try
             {
-                return GetLeafWidthsFromAria(plan, beam).ToArray();
+                return GetLeafWidthsFromAria(patient, plan, beam).ToArray();
             }
             catch (Exception e)
             {
@@ -65,10 +65,10 @@ namespace Complexity.EsapiApertureMetric
             }
         }
 
-        private IEnumerable<double> GetLeafWidthsFromAria(PlanSetup plan, Beam beam)
+        private IEnumerable<double> GetLeafWidthsFromAria(
+            Patient patient, PlanSetup plan, Beam beam)
         {
             var course = plan.Course;
-            var patient = course.Patient;
 
             using (var ac = new AriaContext())
             {

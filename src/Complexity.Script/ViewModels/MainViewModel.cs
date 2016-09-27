@@ -16,7 +16,7 @@ namespace Complexity.ViewModels
             Plan = activePlan;
             Plans = plans;
 
-            EdgePenaltyViewModel = new EdgePenaltyViewModel(this, activePlan, Plans);
+            EdgePenaltyViewModel = new EdgePenaltyViewModel(this, patient, activePlan, Plans);
         }
 
         public User User { get; }

@@ -11,6 +11,7 @@ namespace Complexity.ViewModels
         private double _penalty;
         private bool _showOnPlots;
 
+        public Patient Patient { get; private set; }
         public PlanSetup Plan { get; private set; }
 
         public string Id
@@ -46,8 +47,9 @@ namespace Complexity.ViewModels
             }
         }
 
-        public PlanViewModel(PlanSetup plan)
+        public PlanViewModel(Patient patient, PlanSetup plan)
         {
+            Patient = patient;
             Plan = plan;
 
             OxyPlotColorsToUse Colors = new OxyPlotColorsToUse();
